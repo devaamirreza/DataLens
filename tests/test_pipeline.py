@@ -6,7 +6,10 @@ from pandas.testing import assert_frame_equal
 from datalens.pipeline import clean_dataset
 
 
-# Test 1: Complete cleaning pipeline
+# --------------------------------------------------
+# TEST 1: COMPLETE CLEANING PIPELINE
+# --------------------------------------------------
+
 def test_complete_cleaning_pipeline():
 
     df = pd.DataFrame({
@@ -28,14 +31,24 @@ def test_complete_cleaning_pipeline():
     )
 
     assert len(cleaned_df) == 3
+
     assert cleaned_df["Age"].isnull().sum() == 0
+
     assert cleaned_df.loc[2, "Age"] == 30
 
     assert report["duplicates_removed"] == 1
+
     assert report["missing_values_handled"] == 1
 
+    assert report["original_rows"] == 4
 
-# Test 2: Original dataset preservation
+    assert report["final_rows"] == 3
+
+
+# --------------------------------------------------
+# TEST 2: ORIGINAL DATASET PRESERVATION
+# --------------------------------------------------
+
 def test_pipeline_preserves_original_data():
 
     df = pd.DataFrame({
@@ -47,20 +60,32 @@ def test_pipeline_preserves_original_data():
 
     clean_dataset(
         df,
-        conversions={"Age": "int"}
+        conversions={
+            "Age": "int"
+        }
     )
 
     assert_frame_equal(df, original_df)
 
 
-# Test 3: Invalid DataFrame
+# --------------------------------------------------
+# TEST 3: INVALID DATAFRAME
+# --------------------------------------------------
+
 def test_pipeline_rejects_invalid_dataframe():
 
     with pytest.raises(TypeError):
-        clean_dataset(["Aamir", "Rahul"])
+
+        clean_dataset([
+            "Aamir",
+            "Rahul"
+        ])
 
 
-# Test 4: Invalid missing-value strategy
+# --------------------------------------------------
+# TEST 4: INVALID MISSING-VALUE STRATEGY
+# --------------------------------------------------
+
 def test_pipeline_rejects_invalid_strategy():
 
     df = pd.DataFrame({
@@ -69,10 +94,17 @@ def test_pipeline_rejects_invalid_strategy():
     })
 
     with pytest.raises(ValueError):
-        clean_dataset(df, missing_strategy="mode")
+
+        clean_dataset(
+            df,
+            missing_strategy="mode"
+        )
 
 
-# Test 5: Invalid conversion column
+# --------------------------------------------------
+# TEST 5: INVALID CONVERSION COLUMN
+# --------------------------------------------------
+
 def test_pipeline_rejects_invalid_column():
 
     df = pd.DataFrame({
@@ -81,13 +113,19 @@ def test_pipeline_rejects_invalid_column():
     })
 
     with pytest.raises(ValueError):
+
         clean_dataset(
             df,
-            conversions={"Salary": "float"}
+            conversions={
+                "Salary": "float"
+            }
         )
 
 
-# Test 6: Invalid conversion data
+# --------------------------------------------------
+# TEST 6: INVALID CONVERSION DATA
+# --------------------------------------------------
+
 def test_pipeline_rejects_invalid_conversion():
 
     df = pd.DataFrame({
@@ -95,7 +133,41 @@ def test_pipeline_rejects_invalid_conversion():
     })
 
     with pytest.raises(ValueError):
+
         clean_dataset(
             df,
-            conversions={"Age": "int"}
+            conversions={
+                "Age": "int"
+            }
         )
+
+
+# --------------------------------------------------
+# TEST 7: PIPELINE WITHOUT DUPLICATE REMOVAL
+# --------------------------------------------------
+
+def test_pipeline_without_duplicate_removal():
+
+    df = pd.DataFrame({
+        "Name": ["Aamir", "Aamir", "Rahul"],
+        "Age": [30, 30, 28]
+    })
+
+    cleaned_df, report = clean_dataset(
+        df,
+        remove_duplicate_rows=False,
+        missing_strategy="drop"
+    )
+
+    # All original rows should remain.
+    assert len(cleaned_df) == 3
+
+    # No duplicates should have been removed.
+    assert report["duplicates_removed"] == 0
+
+    # Validate final statistics.
+    assert report["original_rows"] == 3
+
+    assert report["final_rows"] == 3
+
+    assert report["final_columns"] == 2

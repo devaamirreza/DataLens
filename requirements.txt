@@ -1,1 +1,7 @@
 pandas
+pytest
+pytest-cov
+streamlit
+plotly
+openpyxl
+reportlab
